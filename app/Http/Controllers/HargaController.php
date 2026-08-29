@@ -81,7 +81,7 @@ class HargaController extends Controller
     {
         return view('admin.harga-edit-kategori', [
             'k' => new KategoriSampah,
-            'kelompok' => KelompokSampah::orderBy('nama')->get(),
+            'kelompok' => KelompokSampah::where('aktif', true)->orderBy('urutan')->get(),
         ]);
     }
 
@@ -89,7 +89,7 @@ class HargaController extends Controller
     {
         return view('admin.harga-edit-kategori', [
             'k' => $kategori,
-            'kelompok' => KelompokSampah::orderBy('nama')->get(),
+            'kelompok' => KelompokSampah::where('aktif', true)->orderBy('urutan')->get(),
         ]);
     }
 
@@ -100,19 +100,31 @@ class HargaController extends Controller
             'kode' => ['nullable', 'string', 'max:20', 'unique:kategori_sampah,kode'],
             'keterangan' => ['nullable', 'string', 'max:500'],
             'kelompok_sampah_id' => ['nullable', 'exists:kelompok_sampah,id'],
+            'faktor_emisi_kg_co2e' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'harga_per_kg' => ['required', 'integer', 'min:1', 'max:1000000'],
         ], [], [
-            'nama' => 'nama plastik',
+            'nama' => 'nama jenis sampah',
             'kode' => 'kode',
+            'kelompok_sampah_id' => 'kelompok EPA',
+            'faktor_emisi_kg_co2e' => 'faktor emisi',
             'harga_per_kg' => 'harga per kg',
         ]);
 
-        $kategori = \Illuminate\Support\Facades\DB::transaction(function () use ($data, $request) {
+        $faktorEmisi = null;
+        if (isset($data['faktor_emisi_kg_co2e']) && is_numeric($data['faktor_emisi_kg_co2e'])) {
+            $faktorEmisi = (float) $data['faktor_emisi_kg_co2e'];
+        } elseif (! empty($data['kelompok_sampah_id'])) {
+            $kel = KelompokSampah::find($data['kelompok_sampah_id']);
+            $faktorEmisi = $kel ? (float) $kel->ef_recycled : null;
+        }
+
+        $kategori = \Illuminate\Support\Facades\DB::transaction(function () use ($data, $faktorEmisi, $request) {
             $kategori = KategoriSampah::create([
                 'nama' => $data['nama'],
                 'kode' => strtoupper($data['kode'] ?? ''),
                 'keterangan' => $data['keterangan'] ?? null,
                 'kelompok_sampah_id' => $data['kelompok_sampah_id'] ?? null,
+                'faktor_emisi_kg_co2e' => $faktorEmisi,
                 'aktif' => true,
             ]);
 
@@ -129,7 +141,7 @@ class HargaController extends Controller
 
         return redirect()
             ->route('admin.harga.index')
-            ->with('sukses', "Jenis plastik {$kategori->nama} ditambahkan dengan harga Rp ".number_format((int) $data['harga_per_kg'], 0, ',', '.').'/kg.');
+            ->with('sukses', "Jenis sampah {$kategori->nama} ditambahkan dengan harga Rp ".number_format((int) $data['harga_per_kg'], 0, ',', '.').'/kg.');
     }
 
     public function updateKategori(Request $request, KategoriSampah $kategori, PengaturHarga $pengatur)
@@ -139,19 +151,31 @@ class HargaController extends Controller
             'kode' => ['nullable', 'string', 'max:20', 'unique:kategori_sampah,kode,'.$kategori->id],
             'keterangan' => ['nullable', 'string', 'max:500'],
             'kelompok_sampah_id' => ['nullable', 'exists:kelompok_sampah,id'],
+            'faktor_emisi_kg_co2e' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'aktif' => ['nullable', 'in:1,on,true'],
             'harga_per_kg' => ['nullable', 'integer', 'min:1', 'max:1000000'],
         ], [], [
-            'nama' => 'nama plastik',
+            'nama' => 'nama jenis sampah',
             'kode' => 'kode',
+            'kelompok_sampah_id' => 'kelompok EPA',
+            'faktor_emisi_kg_co2e' => 'faktor emisi',
             'harga_per_kg' => 'harga per kg',
         ]);
+
+        $faktorEmisi = $kategori->faktor_emisi_kg_co2e;
+        if (isset($data['faktor_emisi_kg_co2e']) && is_numeric($data['faktor_emisi_kg_co2e'])) {
+            $faktorEmisi = (float) $data['faktor_emisi_kg_co2e'];
+        } elseif (! empty($data['kelompok_sampah_id'])) {
+            $kel = KelompokSampah::find($data['kelompok_sampah_id']);
+            $faktorEmisi = $kel ? (float) $kel->ef_recycled : null;
+        }
 
         $kategori->update([
             'nama' => $data['nama'],
             'kode' => strtoupper($data['kode'] ?? ''),
             'keterangan' => $data['keterangan'] ?? null,
             'kelompok_sampah_id' => $data['kelompok_sampah_id'] ?? null,
+            'faktor_emisi_kg_co2e' => $faktorEmisi,
             'aktif' => (bool) ($data['aktif'] ?? false),
         ]);
 
@@ -168,7 +192,7 @@ class HargaController extends Controller
 
         return redirect()
             ->route('admin.harga.index')
-            ->with('sukses', "Jenis plastik {$kategori->nama} diperbarui.");
+            ->with('sukses', "Jenis sampah {$kategori->nama} diperbarui.");
     }
 
     public function destroyKategori(KategoriSampah $kategori)

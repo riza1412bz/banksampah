@@ -1,24 +1,24 @@
 // resources/js/pages/setoran-baru.js — dipisah dari blade untuk cache + minify + defer (Vite)
-// Menggantikan inline <script> di admin/setoran-baru.blade.php
 (() => {
   'use strict';
 
   const checkboxes = document.querySelectorAll('.cek-item');
   if (!checkboxes.length) return;
 
-  const beratInputs = document.querySelectorAll('.berat-item');
   const campurHarga = document.getElementById('campur_harga');
   const panelCampur = document.getElementById('panel-campur');
   const pratinjau = document.getElementById('pratinjau');
   const pratinjauBerat = document.getElementById('pratinjau-berat');
   const dampakGhg = document.getElementById('dampak-ghg');
   const dampakPohon = document.getElementById('dampak-pohon');
+  const dampakMobil = document.getElementById('dampak-mobil');
+  const dampakLampu = document.getElementById('dampak-lampu');
   const dampakRincian = document.getElementById('dampak-rincian');
 
   // Deteksi id Campur sekali di awal (hindari loop per hitung)
   let campurId = null;
   for (const cb of checkboxes) {
-    const label = cb.closest('.mb-2')?.querySelector('.font-medium')?.textContent.trim() || '';
+    const label = cb.closest('div')?.querySelector('.font-medium')?.textContent.trim() || '';
     if (cb.dataset.kode === 'CAMPUR' || label.toLowerCase().includes('campur')) {
       campurId = cb.dataset.id;
       break;
@@ -27,7 +27,7 @@
 
   // Cache mapping id → {cb, inp, wrapper, hargaDefault, ghg, kelompok}
   const items = [...checkboxes].map((cb) => {
-    const wrapper = cb.closest('.mb-2');
+    const wrapper = cb.closest('.rounded-xl') || cb.closest('.flex');
     const inp = wrapper?.querySelector('.berat-item');
     return {
       cb,
@@ -85,7 +85,7 @@
   }
 
   function hitungDampak() {
-    if (!dampakGhg || !dampakPohon || !dampakRincian) return;
+    if (!dampakGhg || !dampakPohon) return;
     let totalGhg = 0;
     const perKelompok = new Map();
     for (const { cb, inp, ghg, kelompok } of items) {
@@ -99,27 +99,50 @@
         perKelompok.set(kelompok, prev + cur);
       }
     }
-    dampakGhg.textContent = formatDampak(totalGhg);
-    dampakPohon.textContent = formatDampak(totalGhg / 60);
 
-    // Render rincian via DocumentFragment (hindari reflow per li)
-    const frag = document.createDocumentFragment();
-    const urut = [...perKelompok.entries()].sort((a, b) => b[1] - a[1]);
-    for (const [nama, ghg] of urut) {
-      if (ghg <= 0) continue;
-      const li = document.createElement('li');
-      li.className = 'flex items-baseline justify-between gap-2';
-      li.innerHTML =
-        '<span class="font-medium text-karet/70">' +
-        escapeHtml(nama) +
-        '</span><span class="angka tabular-nums text-karet/60">' +
-        formatDampak(ghg) +
-        ' CO₂e · ' +
-        formatDampak(ghg / 60) +
-        ' pohon</span>';
-      frag.appendChild(li);
+    dampakGhg.textContent = formatDampak(totalGhg);
+
+    // Ekuivalensi Pohon: 22.9 kg CO2e / pohon (10 tahun tumbuh)
+    const pohon = totalGhg > 0 ? Math.round(totalGhg / 22.9) : 0;
+    dampakPohon.textContent = pohon.toLocaleString('id-ID');
+
+    // Ekuivalensi Mobil: 4.0029 km / kg CO2e
+    if (dampakMobil) {
+      const mobilKm = totalGhg > 0 ? Math.round(totalGhg * 4.0029) : 0;
+      dampakMobil.textContent = mobilKm.toLocaleString('id-ID') + ' KM';
     }
-    dampakRincian.replaceChildren(frag);
+
+    // Ekuivalensi Lampu LED 10W: (kg CO2e / 0.85) * 100 jam
+    if (dampakLampu) {
+      const jamLampu = totalGhg > 0 ? Math.round((totalGhg / 0.85) * 100) : 0;
+      const jamLampuFormatted = jamLampu >= 1000 ? Math.round(jamLampu / 1000) + 'K Jam' : jamLampu.toLocaleString('id-ID') + ' Jam';
+      dampakLampu.textContent = jamLampuFormatted;
+    }
+
+    // Render rincian via DocumentFragment
+    if (dampakRincian) {
+      const frag = document.createDocumentFragment();
+      const urut = [...perKelompok.entries()].sort((a, b) => b[1] - a[1]);
+      for (const [nama, ghg] of urut) {
+        if (ghg <= 0) continue;
+        const li = document.createElement('li');
+        li.className = 'flex items-baseline justify-between gap-2 text-zinc-600';
+        const pohonKelompok = Math.round(ghg / 22.9);
+        const kmKelompok = Math.round(ghg * 4.0029);
+        li.innerHTML =
+          '<span class="font-medium text-zinc-800">' +
+          escapeHtml(nama) +
+          '</span><span class="tabular-nums text-zinc-500">' +
+          formatDampak(ghg) +
+          ' kg CO₂e · ' +
+          pohonKelompok +
+          ' pohon · ' +
+          kmKelompok +
+          ' KM</span>';
+        frag.appendChild(li);
+      }
+      dampakRincian.replaceChildren(frag);
+    }
   }
 
   function formatDampak(n) {
@@ -141,3 +164,4 @@
   hitungTotal();
   hitungDampak();
 })();
+

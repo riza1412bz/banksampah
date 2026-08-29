@@ -94,23 +94,35 @@
                     <p class="mt-1 text-xs text-white/60">Total berat <span id="pratinjau-berat" class="font-medium text-white">0 kg</span></p>
                 </div>
 
-                <div aria-live="polite" class="rounded-2xl border border-zinc-200 bg-white p-5">
-                    <p class="text-xs font-medium uppercase tracking-widest text-zinc-500">Dampak lingkungan setoran ini</p>
+                <div aria-live="polite" class="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Dampak lingkungan setoran ini</p>
+                        <span class="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700 border border-emerald-200/60">EPA WARM v16</span>
+                    </div>
                     <p class="mt-3 rounded-xl bg-zinc-50 px-3 py-2.5 text-xs leading-relaxed text-zinc-600">
-                        <span class="font-medium text-zinc-900">Rumus:</span> kg CO₂e = berat (kg) × faktor emisi (kg CO₂e/kg)<br>ekuivalen pohon = kg CO₂e ÷ 60
+                        <span class="font-medium text-zinc-900">Rumus:</span> E<sub>terhindar</sub> = Σ (berat × faktor emisi)<br>
+                        <span class="text-zinc-500">Konversi: 1 pohon ≈ 22,9 kg CO₂e · 1 kg CO₂e ≈ 4,0 km mobil · 1 kWh ≈ 100 jam LED 10W</span>
                     </p>
-                    <div class="mt-4 grid grid-cols-2 gap-4">
+                    <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
                         <div class="rounded-xl bg-zinc-50 p-3">
-                            <p class="text-xs text-zinc-500">kg CO₂e dihemat</p>
-                            <p id="dampak-ghg" class="mt-1 text-xl font-semibold text-zinc-900">0</p>
+                            <p class="text-[11px] font-medium text-zinc-500">kg CO₂e dihemat</p>
+                            <p id="dampak-ghg" class="mt-1 text-lg font-bold text-zinc-900 tabular-nums">0</p>
                         </div>
                         <div class="rounded-xl bg-zinc-50 p-3">
-                            <p class="text-xs text-zinc-500">Bibit pohon</p>
-                            <p id="dampak-pohon" class="mt-1 text-xl font-semibold text-zinc-900">0</p>
+                            <p class="text-[11px] font-medium text-zinc-500">🌳 Bibit pohon</p>
+                            <p id="dampak-pohon" class="mt-1 text-lg font-bold text-emerald-700 tabular-nums">0</p>
+                        </div>
+                        <div class="rounded-xl bg-zinc-50 p-3">
+                            <p class="text-[11px] font-medium text-zinc-500">🚗 Mobil bensin</p>
+                            <p id="dampak-mobil" class="mt-1 text-lg font-bold text-zinc-900 tabular-nums">0 KM</p>
+                        </div>
+                        <div class="rounded-xl bg-zinc-50 p-3">
+                            <p class="text-[11px] font-medium text-zinc-500">💡 Lampu LED 10W</p>
+                            <p id="dampak-lampu" class="mt-1 text-lg font-bold text-amber-600 tabular-nums">0 Jam</p>
                         </div>
                     </div>
                     <ul id="dampak-rincian" class="mt-4 space-y-1.5 border-t border-zinc-100 pt-3 text-xs"></ul>
-                    <p class="mt-3 text-xs leading-relaxed text-zinc-400">Faktor emisi EPA ReCon · 1 bibit ≈ 60 kg CO₂e / 10 tahun.</p>
+                    <p class="mt-3 text-[11px] leading-relaxed text-zinc-400">Metodologi EPA WARM v16 & EPR Carbon Impact Analytics · Relatable Metrics.</p>
                 </div>
 
                 <div class="grid gap-4 sm:grid-cols-2">

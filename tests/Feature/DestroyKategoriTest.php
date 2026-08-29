@@ -79,7 +79,7 @@ class DestroyKategoriTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.harga.edit-kategori', $kategori))
             ->assertOk()
-            ->assertSee('Hapus jenis plastik ini')
+            ->assertSee('Hapus jenis sampah ini')
             ->assertSee(route('admin.harga.destroy-kategori', $kategori));
     }
 }

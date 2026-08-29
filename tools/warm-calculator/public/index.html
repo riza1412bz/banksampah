@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WARM v16 Impact Calculator & Waste Report Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-layout no-print">
+    <!-- Sidebar / Input Panel -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-badge">EPA WARM v16 × Waste Report</div>
+        <h2>Kalkulator Emisi Terhindar</h2>
+        <p class="subtitle">Simulasi perhitungan jejak karbon & cetak laporan dampak lingkungan (EPR Report).</p>
+      </div>
+
+      <!-- Presets -->
+      <div class="preset-section">
+        <label class="section-label">PILIH PRESET CONTOH</label>
+        <div class="preset-buttons">
+          <button type="button" class="btn-preset active" id="btn-preset-pdf">📄 Sample PDF Asli (K9 + P14)</button>
+          <button type="button" class="btn-preset" id="btn-preset-mixed">♻️ Bank Sampah Campuran</button>
+          <button type="button" class="btn-preset" id="btn-preset-office">🏢 Perkantoran (HVS + PET + Kardus)</button>
+        </div>
+      </div>
+
+      <!-- Metadata Form -->
+      <form id="calculator-form">
+        <div class="form-group-title">METADATA MANIFES</div>
+        <div class="form-grid">
+          <div class="form-field">
+            <label for="input-mitra">Mitra Korporasi / Nasabah</label>
+            <input type="text" id="input-mitra" value="—" placeholder="Nama Perusahaan / Nasabah">
+          </div>
+          <div class="form-field">
+            <label for="input-manifes">No. Manifes / Nota</label>
+            <input type="text" id="input-manifes" value="001/PNB/BSIL/VII/2026">
+          </div>
+          <div class="form-field">
+            <label for="input-periode">Periode Analisis</label>
+            <input type="text" id="input-periode" value="Juli 2026">
+          </div>
+          <div class="form-field">
+            <label for="input-fasilitas">Fasilitas Pengelola</label>
+            <input type="text" id="input-fasilitas" value="Bank Sampah Indah Lestari">
+          </div>
+        </div>
+
+        <div class="form-group-title" style="margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+          <span>ITEM KOMODITAS SAMPAH</span>
+          <button type="button" class="btn-add-item" id="btn-add-row">+ Tambah Baris</button>
+        </div>
+
+        <div id="items-container" class="items-list">
+          <!-- Dynamic Items Injected Here -->
+        </div>
+
+        <div class="sidebar-actions">
+          <button type="button" class="btn-print" id="btn-print-doc">🖨️ Cetak / Download PDF</button>
+          <button type="button" class="btn-reset" id="btn-reset-form">Reset Default</button>
+        </div>
+      </form>
+    </aside>
+
+    <!-- Preview Container (A4 Visual Pages) -->
+    <main class="preview-area">
+      <div class="preview-toolbar">
+        <div class="preview-title">
+          <span class="dot-live"></span> Live Document Preview (2 Halaman A4)
+        </div>
+        <div class="preview-hint">Tampilan di bawah identik dengan format <code>WASTE REPORT.pdf</code></div>
+      </div>
+
+      <div class="pages-wrapper">
+        <!-- ==================== HALAMAN 1 ==================== -->
+        <div class="sheet" id="page-1">
+          <div class="sheet-inner">
+            <!-- Header -->
+            <div class="doc-header">
+              <div class="doc-title-box">
+                <h1 class="main-title">LAPORAN EMISI<br>TERHINDAR</h1>
+              </div>
+              <div class="doc-logo-box">
+                <div class="logo-wrapper">
+                  <svg class="logo-bird" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="45" stroke="#18181b" stroke-width="4"/>
+                    <path d="M30 55 C35 35, 65 35, 70 55 C65 70, 35 70, 30 55 Z" fill="#18181b"/>
+                    <circle cx="62" cy="45" r="4" fill="#ffffff"/>
+                    <path d="M70 52 L82 50 L72 58 Z" fill="#18181b"/>
+                  </svg>
+                  <span class="logo-text">iLitterless</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Meta Data Table -->
+            <div class="meta-section">
+              <table class="meta-table">
+                <tr>
+                  <td class="meta-label">Mitra Korporasi</td>
+                  <td class="meta-sep">:</td>
+                  <td class="meta-value" id="view-mitra">—</td>
+                </tr>
+                <tr>
+                  <td class="meta-label">No. Manifes / Nota</td>
+                  <td class="meta-sep">:</td>
+                  <td class="meta-value" id="view-manifes">001/PNB/BSIL/VII/2026</td>
+                </tr>
+                <tr>
+                  <td class="meta-label">Periode Analisis</td>
+                  <td class="meta-sep">:</td>
+                  <td class="meta-value" id="view-periode">Juli 2026</td>
+                </tr>
+                <tr>
+                  <td class="meta-label">Fasilitas Pengelola</td>
+                  <td class="meta-sep">:</td>
+                  <td class="meta-value" id="view-fasilitas">Bank Sampah Indah Lestari</td>
+                </tr>
+              </table>
+            </div>
+
+            <!-- Executive Summary Banner -->
+            <div class="banner-title">
+              RINGKASAN EKSEKUTIF DAN KUANTIFIKASI MATERIAL
+            </div>
+            <p class="exec-summary-text">
+              Sebagai wujud komitmen bersama dalam mewujudkan keberlanjutan dan mendukung implementasi
+              Sustainable Development Goals (SDGs) — khususnya pada poin penanganan perubahan iklim (Goal 13)
+              dan konsumsi yang bertanggung jawab (Goal 12) —, <strong id="view-mitra-text">Mitra</strong> bekerja sama dengan <strong>Bank Sampah Indah Lestari (iLitterless Indonesia)</strong> telah melakukan pengurangan sampah dan penyaluran material daur ulang.
+            </p>
+
+            <!-- Total Metric Cards -->
+            <div class="metric-cards-grid">
+              <div class="metric-card">
+                <div class="metric-card-title">TOTAL SAMPAH TERKELOLA</div>
+                <div class="metric-card-value" id="view-card-volume">88,9 KG</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-card-title">TOTAL EMISI TERHINDAR (AVOIDED)</div>
+                <div class="metric-card-value" id="view-card-emisi">137.40 KG CO2e</div>
+              </div>
+            </div>
+
+            <!-- Section 1 Title -->
+            <div class="section-heading">
+              1. DISTRIBUSI KOMODITAS & KUANTIFIKASI EMISI
+            </div>
+
+            <!-- Main Table -->
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th style="width: 12%;">KODE</th>
+                  <th style="width: 44%;">KATEGORI MATERIAL<br>ANORGANIK</th>
+                  <th style="width: 14%; text-align: center;">VOLUME<br>(KG)</th>
+                  <th style="width: 15%; text-align: center;">FAKTOR EMISI<br>(KG CO2E/KG)</th>
+                  <th style="width: 15%; text-align: right;">EMISI<br>TERHINDAR</th>
+                </tr>
+              </thead>
+              <tbody id="view-table-body">
+                <!-- Injected via JavaScript -->
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td class="total-label">TOTAL</td>
+                  <td class="total-desc">Akumulasi Pengalihan Material dari TPA</td>
+                  <td class="total-vol" id="view-total-vol">88,9 KG</td>
+                  <td class="total-ef">-</td>
+                  <td class="total-emisi" id="view-total-emisi">137.40 kg CO2e</td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <!-- Page 1 Footer -->
+            <div class="sheet-footer">
+              <span class="footer-left">iLitterless Indonesia - EPR Carbon Impact Analytics</span>
+              <span class="footer-right">ilitterlessindonesia.org</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== HALAMAN 2 ==================== -->
+        <div class="sheet" id="page-2">
+          <div class="sheet-inner">
+            <!-- Section 2 Title -->
+            <div class="section-heading" style="margin-top: 1rem;">
+              2. EKUIVALENSI DAMPAK LINGKUNGAN (RELATABLE METRICS)
+            </div>
+            <p class="relatable-intro">
+              Untuk mempermudah visualisasi dampak, angka mitigasi karbon sebesar <strong id="view-relatable-emisi">137.40 kg CO2e</strong> dikonversikan ke dalam aktivitas padanan publik sehari-hari:
+            </p>
+
+            <!-- 3 Equivalency Cards -->
+            <div class="relatable-grid">
+              <!-- Card 1: Pohon -->
+              <div class="relatable-card">
+                <div class="relatable-icon">
+                  <svg viewBox="0 0 100 100" fill="none" class="icon-tree">
+                    <path d="M50 15 C35 15, 25 28, 25 42 C25 52, 32 60, 42 63 L42 85 L58 85 L58 63 C68 60, 75 52, 75 42 C75 28, 65 15, 50 15 Z" fill="#2d6a4f"/>
+                    <path d="M42 63 L42 85 L58 85 L58 63 Z" fill="#6f4e37"/>
+                  </svg>
+                </div>
+                <div class="relatable-value" id="view-eq-pohon">6 pohon</div>
+                <div class="relatable-desc">Bibit pohon yang tumbuh subur selama 10 tahun penuh</div>
+              </div>
+
+              <!-- Card 2: Mobil -->
+              <div class="relatable-card">
+                <div class="relatable-icon">
+                  <svg viewBox="0 0 120 70" fill="none" class="icon-car">
+                    <rect x="10" y="25" width="100" height="30" rx="8" fill="#e63946"/>
+                    <path d="M25 25 L40 8 L80 8 L95 25 Z" fill="#e63946"/>
+                    <rect x="42" y="12" width="16" height="12" rx="2" fill="#ffffff"/>
+                    <rect x="62" y="12" width="16" height="12" rx="2" fill="#ffffff"/>
+                    <circle cx="32" cy="55" r="10" fill="#18181b"/>
+                    <circle cx="32" cy="55" r="4" fill="#ffffff"/>
+                    <circle cx="88" cy="55" r="10" fill="#18181b"/>
+                    <circle cx="88" cy="55" r="4" fill="#ffffff"/>
+                  </svg>
+                </div>
+                <div class="relatable-value" id="view-eq-mobil">550 KM</div>
+                <div class="relatable-desc">Memotong emisi gas buang perjalanan mobil bensin</div>
+              </div>
+
+              <!-- Card 3: Lampu LED -->
+              <div class="relatable-card">
+                <div class="relatable-icon">
+                  <svg viewBox="0 0 100 100" fill="none" class="icon-bulb">
+                    <path d="M50 20 C35 20, 28 32, 28 45 C28 55, 38 62, 42 70 L58 70 C62 62, 72 55, 72 45 C72 32, 65 20, 50 20 Z" fill="#ffb703" stroke="#d4a373" stroke-width="2"/>
+                    <path d="M42 72 L58 72 L55 82 L45 82 Z" fill="#6c757d"/>
+                    <line x1="50" y1="5" x2="50" y2="12" stroke="#ffb703" stroke-width="3" stroke-linecap="round"/>
+                    <line x1="20" y1="20" x2="26" y2="25" stroke="#ffb703" stroke-width="3" stroke-linecap="round"/>
+                    <line x1="80" y1="20" x2="74" y2="25" stroke="#ffb703" stroke-width="3" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <div class="relatable-value" id="view-eq-lampu">11K Jam</div>
+                <div class="relatable-desc">Penghematan konsumsi daya lampu LED hemat energi 10W</div>
+              </div>
+            </div>
+
+            <!-- Section 3 Title -->
+            <div class="section-heading" style="margin-top: 3.5rem;">
+              3. TRANSPARANSI METODOLOGI & PARAMETER
+            </div>
+
+            <!-- Method Dotted Box -->
+            <div class="methodology-box">
+              <p>
+                Laporan ini diterbitkan secara resmi oleh <strong>iLitterless Indonesia</strong> untuk mendukung SDGs 12 (Konsumsi dan Produksi yang Bertanggung Jawab) dan SDGs 13 (Penanganan Perubahan Iklim) melalui kemitraan strategis. Kalkulasi emisi terhindar dihitung menggunakan rumus formal:
+              </p>
+              <div class="formula-display">
+                <strong>E<sub>terhindar</sub> = &Sigma; (M<sub>i</sub> &times; EF<sub>i</sub>)</strong>, di mana <strong>M<sub>i</sub></strong> mewakili massa material ke-i dalam satuan Kilogram (Kg), dan <strong>EF<sub>i</sub></strong> mewakili <em>Emission Factor</em> spesifik komoditas.
+              </div>
+              <p>
+                Rumus ini mengukur emisi yang berhasil dicegah dibandingkan jika sampah tersebut dibiarkan berakhir di TPA (<em>open dumping</em>). Di TPA, sampah anorganik akan melepas gas metana (CH4) dari degradasi selulosa serta menghasilkan emisi siklus hidup dari plastik yang gagal didaur ulang.
+              </p>
+            </div>
+
+            <!-- Page 2 Footer -->
+            <div class="sheet-footer" style="margin-top: auto;">
+              <span class="footer-left">iLitterless Indonesia - EPR Carbon Impact Analytics</span>
+              <span class="footer-right">ilitterlessindonesia.org</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

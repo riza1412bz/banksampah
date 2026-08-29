@@ -60,9 +60,11 @@ class SetoranIndexTest extends TestCase
             ->get(route('admin.setoran.create'))
             ->assertOk()
             ->assertSee('Rumus')
-            ->assertSee('kg CO₂e = berat (kg) × faktor emisi (kg CO₂e/kg)', false)
-            ->assertSee('ekuivalen pohon = kg CO₂e ÷ 60', false)
-            ->assertSee('Dampak lingkungan setoran ini');
+            ->assertSee('EPA WARM v16')
+            ->assertSee('Dampak lingkungan setoran ini')
+            ->assertSee('Bibit pohon')
+            ->assertSee('Mobil bensin')
+            ->assertSee('Lampu LED 10W');
     }
 
     public function test_daftar_setoran_filter_oleh_tanggal(): void

@@ -44,4 +44,17 @@ class KelompokSampah extends Model
     {
         return $this->hasMany(KategoriSampah::class, 'kelompok_sampah_id');
     }
+
+    /**
+     * Dapatkan nama grup/sektor material dari deskripsi.
+     */
+    public function getGrupAttribute(): string
+    {
+        if (str_contains($this->deskripsi ?? '', ' — ')) {
+            return explode(' — ', $this->deskripsi)[0];
+        }
+
+        return 'Lainnya';
+    }
 }
+
