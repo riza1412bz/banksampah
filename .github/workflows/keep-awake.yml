@@ -1,0 +1,21 @@
+name: Keep Render Server Alive
+
+on:
+  schedule:
+    # Berjalan otomatis setiap 10 menit untuk mencegah Render free tier tertidur
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Memungkinkan trigger manual dari tab Actions di GitHub
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Bank Sampah Render Server
+        run: |
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://banksampah-indah-lestari.onrender.com)
+          echo "Server responded with HTTP Status: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -eq 200 ] || [ "$HTTP_STATUS" -eq 302 ]; then
+            echo "✅ Server Bank Sampah aktif dan merespon dengan baik!"
+          else
+            echo "⚠️ Server mengembalikan status: $HTTP_STATUS"
+          fi
