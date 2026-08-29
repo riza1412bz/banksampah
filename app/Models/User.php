@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 
 #[Fillable(['name', 'email', 'password', 'role', 'jenis_nasabah', 'kode_nasabah', 'telepon', 'alamat', 'nik', 'kota', 'kecamatan', 'desa_kelurahan', 'jalan', 'rt_rw', 'detail_rumah', 'aktif'])]
 #[Hidden(['password', 'remember_token'])]
@@ -58,6 +59,50 @@ class User extends Authenticatable
     public static function prefixUntukJenis(string $jenis): string
     {
         return $jenis === self::JENIS_CORPORATE ? 'CORP' : 'BSIL';
+    }
+
+    /**
+     * Buat nasabah baru dengan kode_nasabah yang race-safe.
+     *
+     * Generasi kode + INSERT dilakukan dalam SATU transaksi supaya lock (Postgres)
+     * / write-lock IMMEDIATE (SQLite) menahan sampai commit — mencegah dua request
+     * paralel menghitung kode yang sama. Dipakai baik oleh registrasi mandiri
+     * maupun admin, jadi tidak ada jalur yang tertinggal tanpa proteksi.
+     *
+     * @param  array<string, mixed>  $atribut  data tervalidasi (tanpa role/jenis/kode/aktif)
+     */
+    public static function buatNasabah(array $atribut, string $jenis = self::JENIS_PERORANGAN): self
+    {
+        return DB::transaction(function () use ($atribut, $jenis) {
+            return static::create([
+                ...$atribut,
+                'role' => self::ROLE_NASABAH,
+                'jenis_nasabah' => $jenis,
+                'kode_nasabah' => self::kodeNasabahTerkunci($jenis),
+                'aktif' => true,
+            ]);
+        });
+    }
+
+    /**
+     * Nomor urut kode berikutnya untuk satu prefix, dengan lockForUpdate.
+     * WAJIB dipanggil di dalam transaksi (lihat buatNasabah).
+     *
+     * ponytail: untuk nasabah PERTAMA sebuah prefix (tabel kosong) FOR UPDATE tak punya
+     * baris untuk dikunci, jadi backstop-nya adalah UNIQUE index kode_nasabah. Batas urut 9999/prefix.
+     */
+    protected static function kodeNasabahTerkunci(string $jenis): string
+    {
+        $prefix = self::prefixUntukJenis($jenis);
+
+        $terakhir = static::where('kode_nasabah', 'like', $prefix.'-%')
+            ->lockForUpdate()
+            ->orderByDesc('kode_nasabah')
+            ->value('kode_nasabah');
+
+        $urut = $terakhir ? ((int) substr($terakhir, -4)) + 1 : 1;
+
+        return $prefix.'-'.str_pad((string) $urut, 4, '0', STR_PAD_LEFT);
     }
 
     public function labelJenis(): string

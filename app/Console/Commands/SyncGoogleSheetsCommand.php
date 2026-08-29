@@ -2,7 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Models\KategoriSampah;
 use App\Models\Setoran;
+use App\Models\User;
 use App\Services\GoogleSheetsSync;
 use Illuminate\Console\Command;
 
@@ -27,30 +29,25 @@ class SyncGoogleSheetsCommand extends Command
         if ($this->option('test')) {
             $this->info('Mengirim data uji coba...');
 
+            // Bangun baris uji lewat formatSetoran() agar 15 kolomnya tak pernah drift dari kode asli.
+            $contoh = new Setoran([
+                'nomor_bukti' => 'TEST-001',
+                'berat_gram' => 2500,
+                'harga_per_kg' => 3000,
+                'total_rupiah' => 7500,
+                'tanggal_setor' => now()->toDateString(),
+                'catatan' => 'Baris pengujian integrasi Google Sheets',
+            ]);
+            $contoh->id = 0;
+            $contoh->setRelation('user', new User(['name' => 'Nasabah Uji Coba', 'kode_nasabah' => 'BSIL-TEST', 'jenis_nasabah' => User::JENIS_PERORANGAN]));
+            $contoh->setRelation('kategori', new KategoriSampah(['nama' => 'Botol PET Bening', 'kode' => 'P14', 'faktor_emisi_kg_co2e' => 1.8]));
+            $contoh->setRelation('dicatatOleh', new User(['name' => 'Admin Sistem']));
+
             $testPayload = [
                 'source' => 'banksampah-app',
                 'timestamp' => now()->toIso8601String(),
                 'count' => 1,
-                'items' => [
-                    [
-                        'id' => 0,
-                        'waktu_input' => now()->format('Y-m-d H:i:s'),
-                        'nomor_bukti' => 'TEST-001',
-                        'tanggal_setor' => now()->toDateString(),
-                        'kode_nasabah' => 'BSIL-TEST',
-                        'nama_nasabah' => 'Nasabah Uji Coba',
-                        'jenis_nasabah' => 'Perorangan',
-                        'kategori_sampah' => 'Botol PET Bening',
-                        'kode_kategori' => 'P14',
-                        'berat_kg' => 2.5,
-                        'harga_per_kg' => 3000,
-                        'total_rupiah' => 7500,
-                        'faktor_emisi' => 1.8,
-                        'emisi_terhindar_kg_co2e' => 4.5,
-                        'petugas' => 'Admin Sistem',
-                        'catatan' => 'Baris pengujian integrasi Google Sheets',
-                    ],
-                ],
+                'items' => [$sync->formatSetoran($contoh)],
             ];
 
             $success = $sync->sendPayload($testPayload);
@@ -79,7 +76,7 @@ class SyncGoogleSheetsCommand extends Command
             $bar = $this->output->createProgressBar($total);
             $bar->start();
 
-            Setoran::with(['nasabah', 'kategori', 'petugas'])
+            Setoran::with(['user', 'kategori', 'dicatatOleh'])
                 ->orderBy('id')
                 ->chunk(50, function ($chunk) use ($sync, $bar) {
                     $sync->sync($chunk);

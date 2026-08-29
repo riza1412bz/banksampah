@@ -109,7 +109,8 @@ return [
             'port' => env('SUPABASE_DB_PORT', env('DB_PORT', '5432')),
             'database' => env('SUPABASE_DB_DATABASE', env('DB_DATABASE', 'postgres')),
             'username' => env('SUPABASE_DB_USERNAME', env('DB_USERNAME', 'postgres')),
-            'password' => env('SUPABASE_DB_PASSWORD', env('DB_PASSWORD', 'Jerapah1@123')),
+            // Password diambil murni dari environment — jangan pernah menaruh literal di sini.
+            'password' => env('SUPABASE_DB_PASSWORD', env('DB_PASSWORD')),
             'charset' => 'utf8',
             'prefix' => '',
             'prefix_indexes' => true,

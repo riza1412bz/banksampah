@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\ExportSetoranJob;
+use App\Jobs\SyncSetoranToGoogleSheets;
 use App\Models\KategoriSampah;
 use App\Models\Setoran;
 use App\Models\User;
@@ -138,7 +139,7 @@ class SetoranController extends Controller
             );
 
             // Kirim ke Google Sheets secara asinkron (fail-safe)
-            \App\Jobs\SyncSetoranToGoogleSheets::dispatch(
+            SyncSetoranToGoogleSheets::dispatch(
                 array_map(fn ($s) => $s->id, $setoran)
             );
         } catch (RuntimeException $e) {

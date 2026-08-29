@@ -79,7 +79,7 @@ class PencatatSetoran
      * Catat beberapa setoran sekaligus (satu nasabah, satu tanggal).
      *
      * Optimasi: bulk preload hargaAktif (1 query) + single INSERT batch,
-     * nomor bukti diambil dengan SELECT ... FOR UPDATE di dalam transaksi.
+     * nomor bukti diambil dengan transaction lock di dalam transaksi.
      *
      * @param  array  $items  Setiap item: ['kategori' => KategoriSampah, 'berat_gram' => int, 'harga_per_kg' => ?int]
      * @return array<Setoran>  Semua setoran yang berhasil dibuat.

@@ -39,19 +39,19 @@ class GoogleSheetsSync
     public function formatSetoran(Setoran $setoran): array
     {
         // Pastikan relasi ter-load
-        if (! $setoran->relationLoaded('nasabah')) {
-            $setoran->load('nasabah');
+        if (! $setoran->relationLoaded('user')) {
+            $setoran->load('user');
         }
         if (! $setoran->relationLoaded('kategori')) {
             $setoran->load('kategori');
         }
-        if (! $setoran->relationLoaded('petugas')) {
-            $setoran->load('petugas');
+        if (! $setoran->relationLoaded('dicatatOleh')) {
+            $setoran->load('dicatatOleh');
         }
 
-        $nasabah = $setoran->nasabah;
+        $nasabah = $setoran->user;
         $kategori = $setoran->kategori;
-        $petugas = $setoran->petugas;
+        $petugas = $setoran->dicatatOleh;
 
         $beratKg = round($setoran->berat_gram / 1000, 3);
         $faktorEmisi = (float) ($kategori?->faktor_emisi_kg_co2e ?? 0.0);
@@ -128,9 +128,14 @@ class GoogleSheetsSync
             return false;
         }
 
+        // Sertakan shared secret bila dikonfigurasi, supaya Apps Script bisa menolak pengirim asing.
+        $secret = config('services.google_sheets.secret');
+        if ($secret) {
+            $payload['secret'] = $secret;
+        }
+
         try {
             $response = Http::timeout(8)
-                ->withOptions(['allow_redirects' => true])
                 ->withHeaders([
                     'Accept' => 'application/json',
                     'Content-Type' => 'application/json',

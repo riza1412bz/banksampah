@@ -40,7 +40,7 @@ class SyncSetoranToGoogleSheets implements ShouldQueue
         }
 
         try {
-            $setorans = Setoran::with(['nasabah', 'kategori', 'petugas'])
+            $setorans = Setoran::with(['user', 'kategori', 'dicatatOleh'])
                 ->whereIn('id', $this->setoranIds)
                 ->orderBy('id')
                 ->get();

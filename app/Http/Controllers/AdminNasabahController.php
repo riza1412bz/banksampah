@@ -48,27 +48,7 @@ class AdminNasabahController extends Controller
         $jenis = $data['jenis_nasabah'] ?? User::JENIS_PERORANGAN;
         unset($data['jenis_nasabah']);
 
-        $nasabah = \Illuminate\Support\Facades\DB::transaction(function () use ($data, $jenis) {
-            $prefix = User::prefixUntukJenis($jenis);
-            $like = $prefix.'-%';
-            try {
-                $terakhir = User::where('kode_nasabah', 'like', $like)
-                    ->lockForUpdate()
-                    ->orderByDesc('kode_nasabah')
-                    ->value('kode_nasabah');
-            } catch (\Throwable) {
-                $terakhir = User::where('kode_nasabah', 'like', $like)->orderByDesc('kode_nasabah')->value('kode_nasabah');
-            }
-            $urut = $terakhir ? ((int) substr($terakhir, -4)) + 1 : 1;
-
-            return User::create([
-                ...$data,
-                'role' => User::ROLE_NASABAH,
-                'jenis_nasabah' => $jenis,
-                'kode_nasabah' => $prefix.'-'.str_pad((string) $urut, 4, '0', STR_PAD_LEFT),
-                'aktif' => true,
-            ]);
-        });
+        $nasabah = User::buatNasabah($data, $jenis);
 
         return redirect()
             ->route('admin.nasabah.index')

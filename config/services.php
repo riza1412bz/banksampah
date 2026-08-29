@@ -37,7 +37,10 @@ return [
 
     'google_sheets' => [
         'webhook_url' => env('GOOGLE_SHEETS_WEBHOOK_URL'),
-        'enabled' => env('GOOGLE_SHEETS_SYNC_ENABLED', true),
+        // Opt-in: transmisi data nasabah ke pihak ketiga harus diaktifkan secara eksplisit.
+        'enabled' => env('GOOGLE_SHEETS_SYNC_ENABLED', false),
+        // Opsional: bila di-set, dikirim di payload agar Apps Script bisa memverifikasi pengirim.
+        'secret' => env('GOOGLE_SHEETS_WEBHOOK_SECRET'),
     ],
 
 ];

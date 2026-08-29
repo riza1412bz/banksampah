@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Satu baris = satu kali setor satu jenis plastik.
@@ -38,22 +39,12 @@ class Setoran extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function nasabah(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'user_id');
-    }
-
     public function kategori(): BelongsTo
     {
         return $this->belongsTo(KategoriSampah::class, 'kategori_sampah_id');
     }
 
     public function dicatatOleh(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'dicatat_oleh');
-    }
-
-    public function petugas(): BelongsTo
     {
         return $this->belongsTo(User::class, 'dicatat_oleh');
     }
@@ -85,19 +76,24 @@ class Setoran extends Model
     }
 
     /**
-     * Nomor bukti unik per hari: BSIL-260730-0001
+     * Nomor bukti unik per hari: BSIL-260730-0001.
      *
-     * Menggunakan SELECT ... FOR UPDATE di dalam transaksi pemanggil
-     * untuk mencegah duplikasi pada request paralel.
+     * PostgreSQL tidak mengizinkan FOR UPDATE pada hasil agregat MAX().
+     * Karena semua pemanggil berada di dalam DB::transaction(), gunakan
+     * transaction advisory lock per prefix di PostgreSQL lalu baca MAX()
+     * tanpa FOR UPDATE. SQLite memakai transaction_mode=IMMEDIATE pada
+     * konfigurasi koneksi, sehingga transaksi penulis sudah terserialisasi.
      */
     public static function nomorBuktiBerikutnya(\DateTimeInterface $tanggal): string
     {
         $prefix = 'BSIL-'.$tanggal->format('ymd').'-';
 
-        // MAX() + substr jauh lebih cepat daripada ORDER BY + limit untuk prefix scan,
-        // dan lockForUpdate mencegah race ketika dipanggil di dalam DB::transaction.
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            // Lock hidup sampai transaksi pemanggil commit/rollback, termasuk saat tabel masih kosong.
+            DB::selectOne('SELECT pg_advisory_xact_lock(hashtext(?))', [$prefix]);
+        }
+
         $terakhir = static::where('nomor_bukti', 'like', $prefix.'%')
-            ->lockForUpdate()
             ->max('nomor_bukti');
 
         $urut = $terakhir ? ((int) substr($terakhir, -4)) + 1 : 1;

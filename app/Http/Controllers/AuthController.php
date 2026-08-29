@@ -70,13 +70,7 @@ class AuthController extends Controller
         $jenis = $data['jenis_nasabah'] ?? User::JENIS_PERORANGAN;
         unset($data['jenis_nasabah']);
 
-        $nasabah = User::create([
-            ...$data,
-            'role' => User::ROLE_NASABAH,
-            'jenis_nasabah' => $jenis,
-            'kode_nasabah' => $this->kodeNasabahBerikutnya($jenis),
-            'aktif' => true,
-        ]);
+        $nasabah = User::buatNasabah($data, $jenis);
 
         Auth::login($nasabah);
         $request->session()->regenerate();
@@ -100,25 +94,5 @@ class AuthController extends Controller
         return $user->isAdmin()
             ? route('admin.dashboard')
             : route('nasabah.beranda');
-    }
-
-    private function kodeNasabahBerikutnya(string $jenis = User::JENIS_PERORANGAN): string
-    {
-        $prefix = User::prefixUntukJenis($jenis);
-        $like = $prefix.'-%';
-        try {
-            $terakhir = User::where('kode_nasabah', 'like', $like)
-                ->lockForUpdate()
-                ->orderByDesc('kode_nasabah')
-                ->value('kode_nasabah');
-        } catch (\Throwable) {
-            $terakhir = User::where('kode_nasabah', 'like', $like)
-                ->orderByDesc('kode_nasabah')
-                ->value('kode_nasabah');
-        }
-
-        $urut = $terakhir ? ((int) substr($terakhir, -4)) + 1 : 1;
-
-        return $prefix.'-'.str_pad((string) $urut, 4, '0', STR_PAD_LEFT);
     }
 }

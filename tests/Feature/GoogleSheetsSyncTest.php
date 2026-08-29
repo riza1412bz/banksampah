@@ -154,6 +154,7 @@ class GoogleSheetsSyncTest extends TestCase
     {
         $webhookUrl = 'https://script.google.com/macros/s/AKfycbz_TEST/exec';
         Config::set('services.google_sheets.webhook_url', $webhookUrl);
+        Config::set('services.google_sheets.enabled', true);
 
         Http::fake([
             $webhookUrl => Http::response(['status' => 'success'], 200),
@@ -168,6 +169,7 @@ class GoogleSheetsSyncTest extends TestCase
     {
         $webhookUrl = 'https://script.google.com/macros/s/AKfycbz_TEST/exec';
         Config::set('services.google_sheets.webhook_url', $webhookUrl);
+        Config::set('services.google_sheets.enabled', true);
 
         Http::fake([
             $webhookUrl => Http::response(['status' => 'success'], 200),
@@ -189,6 +191,7 @@ class GoogleSheetsSyncTest extends TestCase
     {
         $webhookUrl = 'https://script.google.com/macros/s/AKfycbz_TEST/exec';
         Config::set('services.google_sheets.webhook_url', $webhookUrl);
+        Config::set('services.google_sheets.enabled', true);
 
         // Simulasi webhook server error 500
         Http::fake([
@@ -206,5 +209,46 @@ class GoogleSheetsSyncTest extends TestCase
         $result = $sync->sync($setoran);
 
         $this->assertFalse($result); // Mengembalikan false secara aman tanpa crash/exception
+    }
+
+    public function test_sync_nonaktif_secara_default_meski_url_terisi(): void
+    {
+        // Opt-in (R3): URL ada tapi enabled=false → tidak mengirim apa pun.
+        Config::set('services.google_sheets.webhook_url', 'https://script.google.com/macros/s/AKfycbz_TEST/exec');
+        Config::set('services.google_sheets.enabled', false);
+        Http::fake();
+
+        $setoran = app(PencatatSetoran::class)->catat(
+            nasabah: $this->nasabah,
+            kategori: $this->kategori,
+            beratGram: 1000,
+            petugas: $this->admin,
+        );
+
+        $sync = app(GoogleSheetsSync::class);
+
+        $this->assertFalse($sync->isConfigured());
+        $this->assertFalse($sync->sync($setoran));
+        Http::assertNothingSent();
+    }
+
+    public function test_payload_menyertakan_secret_bila_dikonfigurasi(): void
+    {
+        $webhookUrl = 'https://script.google.com/macros/s/AKfycbz_TEST/exec';
+        Config::set('services.google_sheets.webhook_url', $webhookUrl);
+        Config::set('services.google_sheets.enabled', true);
+        Config::set('services.google_sheets.secret', 'rahasia-webhook');
+        Http::fake([$webhookUrl => Http::response(['status' => 'success'], 200)]);
+
+        $setoran = app(PencatatSetoran::class)->catat(
+            nasabah: $this->nasabah,
+            kategori: $this->kategori,
+            beratGram: 1000,
+            petugas: $this->admin,
+        );
+
+        app(GoogleSheetsSync::class)->sync($setoran);
+
+        Http::assertSent(fn ($request) => $request['secret'] === 'rahasia-webhook');
     }
 }

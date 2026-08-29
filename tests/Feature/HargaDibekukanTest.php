@@ -4,10 +4,12 @@ namespace Tests\Feature;
 
 use App\Models\HargaSampah;
 use App\Models\KategoriSampah;
+use App\Models\Setoran;
 use App\Models\User;
 use App\Services\PencatatSetoran;
 use App\Services\PengaturHarga;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -111,6 +113,24 @@ class HargaDibekukanTest extends TestCase
     {
         $this->expectException(RuntimeException::class);
         app(PencatatSetoran::class)->catat($this->nasabah, $this->pet, 0, $this->admin);
+    }
+
+    public function test_nomor_bukti_tidak_mengunci_agregat_dengan_for_update(): void
+    {
+        $queries = [];
+        DB::listen(function ($query) use (&$queries): void {
+            $queries[] = strtolower($query->sql);
+        });
+
+        DB::transaction(fn () => Setoran::nomorBuktiBerikutnya(now()));
+
+        $aggregateQueries = array_filter(
+            $queries,
+            fn (string $query): bool => str_contains($query, 'max(') && str_contains($query, 'setoran'),
+        );
+
+        $this->assertNotEmpty($aggregateQueries);
+        $this->assertStringNotContainsString('for update', implode(' ', $aggregateQueries));
     }
 
     public function test_memberi_nomor_bukti_berurutan_per_hari(): void
