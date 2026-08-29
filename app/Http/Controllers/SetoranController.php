@@ -136,6 +136,11 @@ class SetoranController extends Controller
                 tanggalSetor: $request->tanggal_setor,
                 catatanUmum: $request->catatan,
             );
+
+            // Kirim ke Google Sheets secara asinkron (fail-safe)
+            \App\Jobs\SyncSetoranToGoogleSheets::dispatch(
+                array_map(fn ($s) => $s->id, $setoran)
+            );
         } catch (RuntimeException $e) {
             return back()->withInput()->with('gagal', $e->getMessage());
         }

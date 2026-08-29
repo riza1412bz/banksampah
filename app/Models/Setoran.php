@@ -38,12 +38,22 @@ class Setoran extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function nasabah(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
     public function kategori(): BelongsTo
     {
         return $this->belongsTo(KategoriSampah::class, 'kategori_sampah_id');
     }
 
     public function dicatatOleh(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'dicatat_oleh');
+    }
+
+    public function petugas(): BelongsTo
     {
         return $this->belongsTo(User::class, 'dicatat_oleh');
     }
