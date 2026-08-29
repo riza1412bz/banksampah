@@ -1,0 +1,186 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../views/**/*.blade.php';
+
+/*
+  Palet Elegant Minimal — iterasi clean & simple
+  Karung → off-white hangat, Terpal → zinc-900, Pet/Nota → putih
+  Satu aksen (zinc-900) + netral zinc, bukan teal yang mendominasi.
+  Tetap pakai nama variabel lama agar tidak ubah semua Blade.
+*/
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-display: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    --color-karung: #fbfbfa; /* zinc-50 warm */
+    --color-kertas: #ffffff;
+    --color-karung-tua: #f4f4f5; /* zinc-100 */
+    --color-terpal: #18181b; /* zinc-900 — elegant, bukan teal */
+    --color-terpal-muda: #27272a; /* zinc-800 */
+    --color-timbangan: #dc2626; /* red-600, lebih clean */
+    --color-pet: #ffffff;
+    --color-karet: #18181b; /* zinc-900 */
+    --color-nota: #f4f4f5;
+
+    /* Tambahan untuk shadow tint yang senada — bukan hitam murni */
+    --color-shadow: #18181b;
+}
+
+@layer base {
+    html {
+        scrollbar-gutter: stable;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        scroll-behavior: smooth;
+    }
+
+    body {
+        background-color: var(--color-karung);
+        color: var(--color-karet);
+        /* Hilang texture — flat clean */
+        contain: layout paint;
+        letter-spacing: -0.01em;
+    }
+
+    /* Angka rupiah & berat — tabular, tidak terlalu rapat */
+    .angka {
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.015em;
+        font-synthesis: none;
+    }
+
+    /* Content-visibility untuk list panjang */
+    ul[data-list="transaksi"] > li,
+    ul.space-y-3 > li,
+    div.space-y-3 > div {
+        content-visibility: auto;
+        contain-intrinsic-size: auto 120px;
+    }
+
+    /* Tipografi elegant: heading lebih tight, body lebih lega */
+    h1, h2, h3 {
+        text-wrap: balance;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+    }
+    p {
+        text-wrap: pretty;
+    }
+}
+
+@layer components {
+    /* Clean elegant: tanpa texture, flat off-white. Tetap ada class agar Blade tidak error. */
+    .tekstur-karung {
+        background-image: none;
+        background-color: var(--color-karung);
+    }
+
+    /* Tepi bergerigi bawah, meniru kertas struk yang disobek. */
+    .tepi-struk {
+        --gigi: 9px;
+        /* Prefiks -webkit- wajib: tanpa itu Safari (dan sebagian Chrome) mengabaikan mask
+           dan tepi bawah tampil lurus. */
+        -webkit-mask-image: radial-gradient(circle at var(--gigi) 100%, transparent 0 calc(var(--gigi) - 1px), #000 var(--gigi));
+        -webkit-mask-size: calc(var(--gigi) * 2) 100%;
+        -webkit-mask-repeat: repeat-x;
+        -webkit-mask-position: bottom;
+        mask-image: radial-gradient(circle at var(--gigi) 100%, transparent 0 calc(var(--gigi) - 1px), #000 var(--gigi));
+        mask-size: calc(var(--gigi) * 2) 100%;
+        mask-repeat: repeat-x;
+        mask-position: bottom;
+    }
+
+    /* Menu mobile: geser + fade halus, sejajar ritme dengan .muncul.
+       max-height dipakai sebagai langitan (ceiling) — cukup untuk 7 item menu. */
+    .menu-mobile {
+        overflow: hidden;
+        max-height: 0;
+        opacity: 0;
+        transform: translateY(-4px);
+        transition: max-height .2s ease, opacity .18s ease, transform .2s ease;
+    }
+    .menu-mobile.terbuka {
+        max-height: 30rem;
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* Jarum timbangan: sekali gerak saat halaman dibuka, tidak berulang. */
+@keyframes jarum-naik {
+    0% {
+        transform: rotate(-88deg);
+    }
+    62% {
+        transform: rotate(calc(var(--sudut) + 7deg));
+    }
+    82% {
+        transform: rotate(calc(var(--sudut) - 3deg));
+    }
+    100% {
+        transform: rotate(var(--sudut));
+    }
+}
+
+.jarum {
+    transform-origin: 50% 100%;
+    animation: jarum-naik 1.4s cubic-bezier(0.34, 1.36, 0.64, 1) both;
+}
+
+/* Muncul bertahap: tiap kelompok di halaman harga naik halus saat dibuka. */
+@keyframes muncul {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+}
+.muncul {
+    animation: muncul 0.35s ease-out both;
+    animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .muncul { animation: none; }
+    .menu-mobile { transition: none; }
+    .jarum {
+        animation: none;
+        transform: rotate(var(--sudut));
+    }
+}
+
+/* ===== Cetak struk — fix blank PDF ===== */
+@media print {
+    @page { margin: 12mm; size: A4; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    /* Matikan content-visibility & contain yang bikin print kosong */
+    *, *::before, *::after { content-visibility: visible !important; contain: none !important; }
+    header, footer, nav, .print\:hidden { display: none !important; }
+    html, body { background: #fff !important; color: #000 !important; }
+    body { -webkit-font-smoothing: auto !important; }
+    main { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+    /* Struk: hilangkan mask bergerigi & shadow, pakai border solid hitam agar terbaca tanpa background graphics */
+    .tepi-struk {
+        -webkit-mask-image: none !important; mask-image: none !important;
+        border-color: #111 !important;
+        border-style: solid !important;
+        border-width: 1.5px !important;
+        border-radius: 12px !important;
+        box-shadow: none !important;
+        background: #fff !important;
+        overflow: visible !important;
+        transform: none !important;
+    }
+    /* Border dashed jadi solid agar terlihat tanpa background graphics */
+    .tepi-struk .border-dashed { border-style: solid !important; border-color: #111 !important; }
+    /* Di print, pill bg-zinc-900 (nomor bukti) ubah jadi putih dengan border hitam agar tidak jadi blok hitam dengan teks hitam */
+    .tepi-struk .bg-zinc-900 { background: #fff !important; color: #111 !important; border: 1px solid #111 !important; }
+    .tepi-struk .bg-zinc-900 * { color: #111 !important; }
+    .tepi-struk .bg-zinc-50 { background: #f9f9f9 !important; }
+    /* Pastikan teks zinc-500 tidak terlalu pudar di print */
+    .tepi-struk .text-zinc-500 { color: #333 !important; }
+    .tepi-struk .text-zinc-400 { color: #555 !important; }
+}
