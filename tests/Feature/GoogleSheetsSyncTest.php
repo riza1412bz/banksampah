@@ -101,6 +101,26 @@ class GoogleSheetsSyncTest extends TestCase
         $this->assertSame('Botol bersih tanpa label', $data['catatan']);
     }
 
+    public function test_waktu_input_memakai_created_at_wib_dan_tanggal_setor_date_only(): void
+    {
+        $setoran = app(PencatatSetoran::class)->catat(
+            nasabah: $this->nasabah,
+            kategori: $this->kategori,
+            beratGram: 1000,
+            petugas: $this->admin,
+        );
+
+        $data = app(GoogleSheetsSync::class)->formatSetoran($setoran);
+
+        // waktu_input = created_at, ditampilkan dalam WIB (+07:00) dan menunjuk instant yang sama.
+        $this->assertSame('+07:00', substr($data['waktu_input'], -6));
+        $this->assertTrue($setoran->created_at->equalTo($data['waktu_input']));
+
+        // tanggal_setor tetap tanggal saja, tanpa komponen jam.
+        $this->assertSame(now()->toDateString(), $data['tanggal_setor']);
+        $this->assertSame(10, strlen($data['tanggal_setor']));
+    }
+
     public function test_sync_mengirimkan_payload_ke_webhook_url(): void
     {
         $webhookUrl = 'https://script.google.com/macros/s/AKfycbz_TEST/exec';

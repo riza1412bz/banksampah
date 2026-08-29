@@ -64,9 +64,10 @@ class GoogleSheetsSync
 
         return [
             'id' => $setoran->id,
-            'waktu_input' => $setoran->created_at ? $setoran->created_at->format('Y-m-d H:i:s') : now()->format('Y-m-d H:i:s'),
+            // Waktu pencatatan (created_at) dalam WIB + offset, biar Sheets tidak menampilkan 00:00.
+            'waktu_input' => ($setoran->created_at ?? now())->copy()->setTimezone('Asia/Jakarta')->toIso8601String(),
             'nomor_bukti' => $setoran->nomor_bukti,
-            'tanggal_setor' => $setoran->tanggal_setor ? (string) $setoran->tanggal_setor : now()->toDateString(),
+            'tanggal_setor' => $setoran->tanggal_setor ? $setoran->tanggal_setor->toDateString() : now('Asia/Jakarta')->toDateString(),
             'kode_nasabah' => $nasabah?->kode_nasabah ?? '-',
             'nama_nasabah' => $nasabah?->name ?? 'Nasabah Anonim',
             'jenis_nasabah' => $jenisNasabah,
