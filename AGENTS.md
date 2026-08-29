@@ -34,3 +34,10 @@ php artisan migrate --force                         # setelah buat migrasi baru
   - **Project Ref**: `ipwickemvyiwrnzhjilo`
   - **Database Host**: `db.ipwickemvyiwrnzhjilo.supabase.co` (Port 5432, Database `postgres`, User `postgres`).
   - DILARANG menghubungkan atau memigrasikan data ke project Supabase selain ref `ipwickemvyiwrnzhjilo`.
+
+## Status Keamanan (2026-08-29)
+
+Security review dengan metodologi [anthropics/claude-code-security-review](https://github.com/anthropics/claude-code-security-review): **tidak ada temuan HIGH/MEDIUM yang dapat dieksploitasi di kode aplikasi Laravel** (SQLi/XSS/mass-assignment/IDOR/RCE/SSRF nihil). Detail lengkap: `docs/security-review.md`.
+
+- TODO (ditunda, prioritas rendah): verifikasi shared `secret` di Google Apps Script `doPost` — backend sudah mengirimnya via `GOOGLE_SHEETS_WEBHOOK_SECRET`, tinggal cek di sisi Apps Script vs Script Property.
+- Defense-in-depth opsional: validasi `dari`/`sampai` sebagai `date` di `SetoranController::exportSetoran` (nama file export).

@@ -34,17 +34,16 @@ function doPost(e) {
       ]);
       sheet.getRange("A1:O1").setFontWeight("bold").setBackground("#e4e4e7").setFontColor("#18181b");
       sheet.setFrozenRows(1);
-      // Kolom A tampil sebagai tanggal + jam, kolom C sebagai tanggal saja.
-      sheet.getRange("A2:A").setNumberFormat("dd/MM/yyyy HH:mm:ss");
-      sheet.getRange("C2:C").setNumberFormat("dd/MM/yyyy");
     }
 
     var rows = data.items || [data];
+    var startRow = sheet.getLastRow() + 1; // baris pertama yang akan diisi batch ini
+
     for (var i = 0; i < rows.length; i++) {
       var r = rows[i];
 
-      // created_at dikirim sebagai ISO-8601 dengan offset (mis. 2026-08-29T19:42:15+07:00).
-      // new Date() memahami offset itu; kalau kosong/invalid, pakai waktu sekarang.
+      // created_at dikirim sebagai ISO-8601 dengan offset (mis. 2026-08-29T20:06:59+07:00).
+      // WAJIB dibungkus new Date() supaya jadi nilai tanggal-waktu, bukan teks mentah.
       var waktuInput = r.waktu_input ? new Date(r.waktu_input) : new Date();
       if (isNaN(waktuInput.getTime())) {
         waktuInput = new Date();
@@ -67,6 +66,13 @@ function doPost(e) {
         r.petugas,
         r.catatan || ""
       ]);
+    }
+
+    // Paksa format kolom pada baris yang baru ditulis — berlaku juga untuk sheet
+    // yang sudah berisi data lama (blok header di atas hanya jalan saat sheet kosong).
+    if (rows.length > 0) {
+      sheet.getRange(startRow, 1, rows.length, 1).setNumberFormat("dd/MM/yyyy HH:mm:ss"); // Waktu Input
+      sheet.getRange(startRow, 3, rows.length, 1).setNumberFormat("dd/MM/yyyy");          // Tanggal Setor
     }
 
     return ContentService.createTextOutput(JSON.stringify({ status: "success", count: rows.length }))
