@@ -129,7 +129,8 @@ class GoogleSheetsSync
         }
 
         try {
-            $response = Http::timeout(6)
+            $response = Http::timeout(8)
+                ->withOptions(['allow_redirects' => true])
                 ->withHeaders([
                     'Accept' => 'application/json',
                     'Content-Type' => 'application/json',
